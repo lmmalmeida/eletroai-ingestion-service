@@ -2,6 +2,7 @@ package com.eletroai.telemetry;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -22,7 +23,7 @@ public class TelemetryResource {
     Emitter<TelemetryRecord> telemetryEmitter;
 
     @POST
-    public Response receiveMetrics(TelemetryRecord payload) {
+    public Response receiveMetrics(@Valid TelemetryRecord payload) {
         telemetryEmitter.send(payload);
         return Response.status(Response.Status.ACCEPTED).build();
     }
