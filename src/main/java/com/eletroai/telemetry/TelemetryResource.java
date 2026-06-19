@@ -16,6 +16,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.jboss.logging.Logger;
 
 @Path("/telemetry")               // 1. Define a rota base do "Controller"
 @ApplicationScoped               // 2. Define o ciclo de vida no Quarkus
@@ -23,6 +24,7 @@ import org.eclipse.microprofile.reactive.messaging.Emitter;
 @Produces(MediaType.APPLICATION_JSON)
 public class TelemetryResource {
 
+    private static final Logger LOG = Logger.getLogger(TelemetryResource.class);
     @Inject
     @Channel("eletroai-metrics")
     Emitter<TelemetryRecord> telemetryEmitter;
@@ -50,7 +52,15 @@ public class TelemetryResource {
                     schema = @Schema(implementation = TelemetryRecord.class)
             )
     ) @Valid TelemetryRecord payload) {
-        telemetryEmitter.send(payload);
+        LOG.info("Recebido payload de: " + payload.deviceId());
+        telemetryEmitter.send(payload)
+                .whenComplete((success, failure) -> {
+                    if (failure != null) {
+                        LOG.error("FALHA CRÍTICA ao enviar para o Redpanda: " + failure.getMessage(), failure);
+                    } else {
+                        LOG.info("Mensagem confirmada pelo Redpanda com sucesso!");
+                    }
+                });
         return Response.accepted().build();
     }
 }
