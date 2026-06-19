@@ -1,5 +1,6 @@
 package com.eletroai.telemetry;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -27,7 +28,7 @@ public class TelemetryResource {
     private static final Logger LOG = Logger.getLogger(TelemetryResource.class);
     @Inject
     @Channel("eletroai-metrics")
-    Emitter<TelemetryRecord> telemetryEmitter;
+    Emitter<MettricsRecord> mettricsEmmiter;
 
     @POST
     @Path("/metrics")
@@ -45,22 +46,16 @@ public class TelemetryResource {
                     description = "Payload inválido. Dados de métrica não respeitam as regras de validação"
             )
     })
-    public Response receiveMetrics(@RequestBody(
+    public Uni<Response> receiveMetrics(@RequestBody(
             description = "Payload com os dados da telemetria do dispositivo",
             required = true,
             content = @org.eclipse.microprofile.openapi.annotations.media.Content(
-                    schema = @Schema(implementation = TelemetryRecord.class)
+                    schema = @Schema(implementation = MettricsRecord.class)
             )
-    ) @Valid TelemetryRecord payload) {
+    ) @Valid MettricsRecord payload) {
         LOG.info("Recebido payload de: " + payload.deviceId());
-        telemetryEmitter.send(payload)
-                .whenComplete((success, failure) -> {
-                    if (failure != null) {
-                        LOG.error("FALHA CRÍTICA ao enviar para o Redpanda: " + failure.getMessage(), failure);
-                    } else {
-                        LOG.info("Mensagem confirmada pelo Redpanda com sucesso!");
-                    }
-                });
-        return Response.accepted().build();
+        return Uni.createFrom().completionStage(mettricsEmmiter.send(payload))
+                .onItem().transform(v -> Response.accepted().build())
+                .onFailure().recoverWithItem(err -> Response.serverError().build());
     }
 }

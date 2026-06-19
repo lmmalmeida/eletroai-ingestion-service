@@ -8,7 +8,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import java.time.Instant;
 
 @Schema(name = "MetricPayload", description = "Representação das métricas de energia enviadas pelo dispositivo Shelly")
-public record TelemetryRecord(
+public record MettricsRecord(
         @Schema(description = "Identificador único do dispositivo Shelly", example = "shelly-em-cozinha", required = true)
         @NotBlank(message = "O ID do dispositivo não pode estar vazio")
         String deviceId,
