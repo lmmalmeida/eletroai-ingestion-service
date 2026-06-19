@@ -1,0 +1,9 @@
+curl -X POST http://localhost:8081/telemetry \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "shelly-em-cozinha",
+    "timestamp": "2026-06-19T10:30:00Z",
+    "currentWatts": 350.5,
+    "voltage": 230.2,
+    "totalKwh": 1245.8
+  }'

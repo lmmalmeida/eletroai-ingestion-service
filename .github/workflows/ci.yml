@@ -1,25 +1,39 @@
-## A basic GitHub Actions workflow for your Quarkus application.
-
-name: CI build
+name: CI/CD EletroAI Ingestion
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout do código
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 25
+      - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
-          java-version: 25
-          distribution: temurin
-          cache: maven
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
 
-      - name: Build
-        run: ./mvnw verify -B
+      - name: Compilar com Maven (Fast-Jar)
+        run: ./mvnw package -DskipTests
+
+      - name: Autenticar no GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir e Enviar Imagem Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          # O GitHub converte automaticamente o nome do repositório para minúsculas aqui
+          tags: ghcr.io/${{ github.repository_owner }}/eletroai-ingestion-service:latest
