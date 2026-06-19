@@ -28,6 +28,7 @@ public class TelemetryResource {
     Emitter<TelemetryRecord> telemetryEmitter;
 
     @POST
+    @Path("/metrics")
     @Operation(
             summary = "Ingerir métrica de energia",
             description = "Recebe o consumo em tempo real de um Shelly e encaminha-o de forma reativa para o broker Redpanda."
